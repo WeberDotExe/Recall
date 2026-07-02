@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  /* ========= Brand Accent ========= */
+  --color-primary: #7c89ff;
+  --color-primary-hover: #6b78f6;
+  --color-primary-light: #a5b0ff;
+
+  --color-accent: #7dd3fc;
+  --color-accent-soft: #b6e6ff;
+
+  /* ========= Backgrounds ========= */
+  --color-background: #070b14;
+  --color-surface: #0d1322;
+  --color-surface-2: #111a2d;
+  --color-surface-3: #162136;
+
+  /* ========= Borders ========= */
+  --color-border: rgba(148, 163, 184, 0.12);
+  --color-border-strong: rgba(148, 163, 184, 0.2);
+
+  /* ========= Text ========= */
+  --color-text-primary: #f4f7ff;
+  --color-text-secondary: #aeb8cf;
+  --color-text-muted: #74809c;
+
+  /* ========= Status ========= */
+  --color-success: #22c55e;
+  --color-error: #f87171;
+  --color-warning: #f59e0b;
+
+  /* ========= Radius ========= */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+
+  /* ========= Shadows / Glow ========= */
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.38);
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.28);
+
+  --glow-primary: 0 0 0 1px rgba(124, 137, 255, 0.16),
+    0 0 36px rgba(124, 137, 255, 0.12);
+
+  --glow-accent: 0 0 0 1px rgba(125, 211, 252, 0.14),
+    0 0 30px rgba(125, 211, 252, 0.1);
+
+  /* ========= Motion ========= */
+  --transition: 200ms ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.05), transparent 24%),
+    radial-gradient(circle at top right, rgba(124, 137, 255, 0.08), transparent 28%),
+    radial-gradient(circle at bottom center, rgba(124, 137, 255, 0.06), transparent 26%),
+    var(--color-background);
+  color: var(--color-text-primary);
+  font-family: "Inter", sans-serif;
+}
+
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-6;
+  }
+
+  .surface-card {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.035) 0%,
+        rgba(255, 255, 255, 0.018) 100%
+      ),
+      var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(18px);
+  }
+
+  .surface-muted {
+    background-color: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glow-border {
+    box-shadow: var(--glow-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+}

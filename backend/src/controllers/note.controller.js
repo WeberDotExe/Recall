@@ -19,43 +19,53 @@ const createNote = asyncHandler(async(req,res)=>{
     })
 })
 
-const getAllNotes = asyncHandler(async(req,res)=>{
+const getAllNotes = asyncHandler(async (req, res) => {
+  const { search, page = 1, sort } = req.query;
+  const limit = 10;
 
-  const {search,page = 1,sort} = req.query;
-  const limit=10;
+  const pageNumber = Number(page) || 1;
 
-  let query = {user: req.user._id};
+  let query = { user: req.user._id };
 
-  if(search){
-    query.$or = [{
-        title:{$regex:search,$options:'i'},
-    },{
-        description:{$regex:search,$options:'i'},
-    },];
+  if (search) {
+    query.$or = [
+      {
+        title: { $regex: search, $options: "i" },
+      },
+      {
+        description: { $regex: search, $options: "i" },
+      },
+    ];
   }
 
-  const sortBy = sort ? sort.split(',').join(' ') : '-createdAt';
+  const sortBy = sort ? sort.split(",").join(" ") : "-createdAt";
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const totalNotes = await noteModel.countDocuments(query)
-  const totalPages = Math.ceil(totalNotes / limit);
-  
-  if(page > totalPages && totalNotes >0){
-    throw new ApiError(404, "notes are not found for this page");
+  const totalNotes = await noteModel.countDocuments(query);
+
+  // Important fix: never let totalPages become 0
+  const totalPages = totalNotes === 0 ? 1 : Math.ceil(totalNotes / limit);
+
+  if (pageNumber > totalPages && totalNotes > 0) {
+    throw new ApiError(404, "Notes are not found for this page");
   }
 
+  const skip = (pageNumber - 1) * limit;
 
-  const notes = await noteModel.find(query).sort(sortBy).skip(skip).limit(Number(limit));
+  const notes = await noteModel
+    .find(query)
+    .sort(sortBy)
+    .skip(skip)
+    .limit(limit);
+
   res.status(200).json({
-    success:true,
-    currentPage:Number(page),
-    totalPages:totalPages,
+    success: true,
+    currentPage: pageNumber,
+    totalPages,
     totalNotes,
-    count:notes.length,
+    count: notes.length,
     notes,
-  })
-})
-
+  });
+});
 const getSingleNote = asyncHandler(async(req,res)=>{
     const {id} = req.params;
     const note = await noteModel.findOne({_id:id,user:req.user._id});
