@@ -7,15 +7,16 @@ import NotesToolbar from "../../components/dashboard/NotesToolbar";
 import NoteCard from "../../components/dashboard/NoteCard";
 import NotesPagination from "../../components/dashboard/NotesPagination";
 
-import useAuth from "../../hooks/useAuth";
-import useDebounce from "../../hooks/useDebounce";
+import useAuth from "../../hooks/UseAuth";
+import useDebounce from "../../hooks/UseDebounce";
+import useAxiosPrivate from "../../hooks/UseAxiosPrivate";
 
-import { getNotes } from "../../api/notes.api";
 import { logout } from "../../api/auth.api";
 
 function Dashboard() {
   const navigate = useNavigate();
-  const { setAuth } = useAuth();
+  const { clearAuth } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("-createdAt");
@@ -33,17 +34,23 @@ function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
 
     const fetchNotes = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const data = await getNotes({
-          page: currentPage,
-          search: debouncedSearch.trim() || undefined,
-          sort,
+        const response = await axiosPrivate.get("/notes", {
+          params: {
+            page: currentPage,
+            search: debouncedSearch.trim() || undefined,
+            sort,
+          },
+          signal: controller.signal,
         });
+
+        const data = response.data;
 
         if (!isMounted) return;
 
@@ -54,6 +61,11 @@ function Dashboard() {
         setCount(data?.count || 0);
       } catch (err) {
         if (!isMounted) return;
+
+        // Ignore aborted request noise
+        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+          return;
+        }
 
         setError(
           err?.response?.data?.message ||
@@ -74,8 +86,9 @@ function Dashboard() {
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, [currentPage, debouncedSearch, sort]);
+  }, [ currentPage, debouncedSearch, sort]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -102,11 +115,7 @@ function Dashboard() {
     } catch (error) {
       console.error("Logout API failed:", error);
     } finally {
-      setAuth({
-        user: null,
-        accessToken: null,
-      });
-
+      clearAuth();
       navigate("/login");
     }
   };
@@ -125,7 +134,6 @@ function Dashboard() {
             onCreateClick={handleCreateClick}
           />
 
-          {/* Notes meta strip */}
           {!loading && !error && (
             <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-[var(--color-text-secondary)]">
@@ -139,7 +147,6 @@ function Dashboard() {
             </div>
           )}
 
-          {/* Loading state */}
           {loading ? (
             <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface)]/90 px-6 py-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
               <div className="flex h-14 w-14 items-center justify-center rounded-3xl border border-indigo-300/15 bg-indigo-300/[0.08] text-indigo-200">
@@ -155,7 +162,6 @@ function Dashboard() {
               </p>
             </div>
           ) : error ? (
-            /* Error state */
             <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[24px] border border-red-400/15 bg-[var(--color-surface)]/90 px-6 py-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
               <div className="flex h-14 w-14 items-center justify-center rounded-3xl border border-red-400/15 bg-red-400/[0.08] text-red-300">
                 <TriangleAlert className="h-7 w-7" />
@@ -185,7 +191,6 @@ function Dashboard() {
               />
             </>
           ) : (
-            /* Empty state */
             <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface)]/90 px-5 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.2)] sm:min-h-[320px] sm:px-6 sm:py-12">
               <div className="flex h-14 w-14 items-center justify-center rounded-3xl border border-indigo-300/15 bg-indigo-300/[0.08] text-indigo-200 sm:h-16 sm:w-16">
                 <SearchX className="h-6 w-6 sm:h-7 sm:w-7" />
