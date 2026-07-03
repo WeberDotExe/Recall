@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowRight,
   Brain,
@@ -17,12 +17,17 @@ import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
 import { loginUser } from "../../api/auth.api";
-import useAuth from "../../hooks/useAuth";
+import useAuth from "../../hooks/UseAuth";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // const from = location.state?.from?.pathname || "/dashboard";
   const { setAuth } = useAuth();
+
   const [apiError, setApiError] = useState("");
+
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const {
     register,
@@ -46,7 +51,7 @@ function Login() {
         accessToken: response.accessToken,
       });
 
-      navigate("/dashboard");
+      navigate(from, { replace: true });
     } catch (error) {
       setApiError(
         error.response?.data?.message || "Login failed. Please try again."

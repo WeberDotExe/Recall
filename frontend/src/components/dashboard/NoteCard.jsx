@@ -1,4 +1,4 @@
-import { Clock3, FileText } from "lucide-react";
+import { Clock3, FileText, Trash2 } from "lucide-react";
 
 function formatDate(dateString) {
   if (!dateString) return "Recently updated";
@@ -12,7 +12,7 @@ function formatDate(dateString) {
   }).format(date);
 }
 
-function NoteCard({ note }) {
+function NoteCard({ note, onDeleteClick, onViewDetails }) {
   const title = note?.title || "Untitled note";
   const description = note?.description || "No description available.";
   const updatedAt = note?.updatedAt || note?.createdAt;
@@ -45,18 +45,30 @@ function NoteCard({ note }) {
         {description}
       </p>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/6 pt-4">
+      <div className="mt-5 flex flex-col gap-3 border-t border-white/6 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
           <Clock3 className="h-3.5 w-3.5" />
           <span>Updated {formatDate(updatedAt)}</span>
         </div>
 
-        <button
-          type="button"
-          className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] transition hover:border-indigo-300/20 hover:text-[var(--color-text-primary)]"
-        >
-          View details
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onViewDetails?.(note._id)}
+            className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] transition hover:border-indigo-300/20 hover:text-[var(--color-text-primary)]"
+          >
+            View details
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onDeleteClick?.(note)}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-400/15 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition hover:border-red-400/25 hover:bg-red-500/15 hover:text-red-100"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </button>
+        </div>
       </div>
     </article>
   );

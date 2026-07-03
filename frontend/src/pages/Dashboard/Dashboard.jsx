@@ -6,6 +6,9 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import NotesToolbar from "../../components/dashboard/NotesToolbar";
 import NoteCard from "../../components/dashboard/NoteCard";
 import NotesPagination from "../../components/dashboard/NotesPagination";
+import CreateNoteModal from "../../components/dashboard/CreateNoteModal";
+import DeleteNoteModal from "../../components/dashboard/DeleteNoteModal";
+import EditNoteModal from "../../components/dashboard/EditNoteModal";
 
 import useAuth from "../../hooks/UseAuth";
 import useDebounce from "../../hooks/UseDebounce";
@@ -30,65 +33,70 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
+  const [isDeletingNote, setIsDeletingNote] = useState(false);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [isLoadingSelectedNote, setIsLoadingSelectedNote] = useState(false);
+  const [selectedNoteError, setSelectedNoteError] = useState("");
+
   const debouncedSearch = useDebounce(search, 400);
 
+  const fetchNotes = async ({ signal, pageOverride } = {}) => {
+    const pageToFetch = pageOverride ?? currentPage;
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await axiosPrivate.get("/notes", {
+        params: {
+          page: pageToFetch,
+          search: debouncedSearch.trim() || undefined,
+          sort,
+        },
+        signal,
+      });
+
+      const data = response.data;
+
+      setNotes(data?.notes || []);
+      setCurrentPage(data?.currentPage || 1);
+      setTotalPages(data?.totalPages || 1);
+      setTotalNotes(data?.totalNotes || 0);
+      setCount(data?.count || 0);
+    } catch (err) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load notes. Please try again."
+      );
+      setNotes([]);
+      setTotalPages(1);
+      setTotalNotes(0);
+      setCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
     const controller = new AbortController();
 
-    const fetchNotes = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await axiosPrivate.get("/notes", {
-          params: {
-            page: currentPage,
-            search: debouncedSearch.trim() || undefined,
-            sort,
-          },
-          signal: controller.signal,
-        });
-
-        const data = response.data;
-
-        if (!isMounted) return;
-
-        setNotes(data?.notes || []);
-        setCurrentPage(data?.currentPage || 1);
-        setTotalPages(data?.totalPages || 1);
-        setTotalNotes(data?.totalNotes || 0);
-        setCount(data?.count || 0);
-      } catch (err) {
-        if (!isMounted) return;
-
-        // Ignore aborted request noise
-        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
-          return;
-        }
-
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load notes. Please try again."
-        );
-        setNotes([]);
-        setTotalPages(1);
-        setTotalNotes(0);
-        setCount(0);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchNotes();
+    fetchNotes({ signal: controller.signal });
 
     return () => {
-      isMounted = false;
       controller.abort();
     };
-  }, [ currentPage, debouncedSearch, sort]);
+  }, [currentPage, debouncedSearch, sort]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -106,7 +114,97 @@ function Dashboard() {
   };
 
   const handleCreateClick = () => {
-    console.log("Open create note modal here");
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleCreateSuccess = () => {
+    setIsCreateModalOpen(false);
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    fetchNotes({ pageOverride: 1 });
+  };
+
+  const handleDeleteClick = (note) => {
+    setNoteToDelete(note);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (isDeletingNote) return;
+    setIsDeleteModalOpen(false);
+    setNoteToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!noteToDelete?._id) return;
+
+    try {
+      setIsDeletingNote(true);
+
+      await axiosPrivate.delete(`/notes/${noteToDelete._id}`);
+
+      const isOnlyNoteOnPage = notes.length === 1;
+      const shouldGoToPreviousPage = currentPage > 1 && isOnlyNoteOnPage;
+
+      setIsDeleteModalOpen(false);
+      setNoteToDelete(null);
+
+      if (shouldGoToPreviousPage) {
+        setCurrentPage((prev) => prev - 1);
+        return;
+      }
+
+      await fetchNotes();
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+    } finally {
+      setIsDeletingNote(false);
+    }
+  };
+
+  const handleViewDetails = async (noteId) => {
+    if (!noteId) return;
+
+    setSelectedNoteId(noteId);
+    setSelectedNote(null);
+    setSelectedNoteError("");
+    setIsEditModalOpen(true);
+    setIsLoadingSelectedNote(true);
+
+    try {
+      const response = await axiosPrivate.get(`/notes/${noteId}`);
+      const noteData = response?.data?.note || response?.data?.data || response?.data;
+
+      setSelectedNote(noteData);
+    } catch (err) {
+      setSelectedNoteError(
+        err?.response?.data?.message ||
+          "Failed to load note details. Please try again."
+      );
+    } finally {
+      setIsLoadingSelectedNote(false);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedNoteId(null);
+    setSelectedNote(null);
+    setSelectedNoteError("");
+    setIsLoadingSelectedNote(false);
+  };
+
+  const handleEditSuccess = async () => {
+    handleCloseEditModal();
+    await fetchNotes();
   };
 
   const handleLogout = async () => {
@@ -179,7 +277,12 @@ function Dashboard() {
             <>
               <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {notes.map((note) => (
-                  <NoteCard key={note._id} note={note} />
+                  <NoteCard
+                    key={note._id}
+                    note={note}
+                    onDeleteClick={handleDeleteClick}
+                    onViewDetails={handleViewDetails}
+                  />
                 ))}
               </div>
 
@@ -209,6 +312,37 @@ function Dashboard() {
           )}
         </div>
       </div>
+
+      <CreateNoteModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+        onSuccess={handleCreateSuccess}
+      />
+
+      <DeleteNoteModal
+        isOpen={isDeleteModalOpen}
+        note={noteToDelete}
+        isDeleting={isDeletingNote}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <EditNoteModal
+        isOpen={isEditModalOpen}
+        noteId={selectedNoteId}
+        note={selectedNote}
+        isLoadingNote={isLoadingSelectedNote}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
+      />
+
+      {isEditModalOpen && selectedNoteError && !isLoadingSelectedNote && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4">
+          <div className="pointer-events-auto w-full max-w-lg rounded-2xl border border-red-400/15 bg-red-500/10 px-4 py-3 text-sm text-red-200 shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
+            {selectedNoteError}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
