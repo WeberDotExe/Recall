@@ -17,7 +17,7 @@ import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
 import { loginUser } from "../../api/auth.api";
-import useAuth from "../../hooks/UseAuth";
+import useAuth from "../../hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();

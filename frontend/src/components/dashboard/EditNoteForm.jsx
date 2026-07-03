@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoaderCircle, Save } from "lucide-react";
-import useAxiosPrivate from "../../hooks/UseAxiosPrivate";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 function EditNoteForm({ noteId, initialNote, onClose, onSuccess }) {
   const axiosPrivate = useAxiosPrivate();

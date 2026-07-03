@@ -10,9 +10,9 @@ import CreateNoteModal from "../../components/dashboard/CreateNoteModal";
 import DeleteNoteModal from "../../components/dashboard/DeleteNoteModal";
 import EditNoteModal from "../../components/dashboard/EditNoteModal";
 
-import useAuth from "../../hooks/UseAuth";
-import useDebounce from "../../hooks/UseDebounce";
-import useAxiosPrivate from "../../hooks/UseAxiosPrivate";
+import useAuth from "../../hooks/useAuth";
+import useDebounce from "../../hooks/useDebounce";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 import { logout } from "../../api/auth.api";
 

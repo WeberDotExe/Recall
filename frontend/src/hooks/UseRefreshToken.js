@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { refresh } from "../api/auth.api";
-import useAuth from "./UseAuth";
+import useAuth from "./useAuth";
 
 const useRefreshToken = () => {
   const { setAuth, user } = useAuth();

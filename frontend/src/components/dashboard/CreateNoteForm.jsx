@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LoaderCircle, Plus } from "lucide-react";
-import useAxiosPrivate from "../../hooks/UseAxiosPrivate";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const initialForm = {
   title: "",
