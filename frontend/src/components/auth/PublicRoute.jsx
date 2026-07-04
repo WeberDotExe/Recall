@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import useAuth from "../../hooks/authHookTemp";
+import useAuth from "../../hooks/useAuth";
 
 function PublicRoute() {
   const { accessToken } = useAuth();
