@@ -12,13 +12,15 @@ import PublicRoute from "../components/auth/PublicRoute";
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route element={<PersistLogin />}>
-        <Route element={<PublicRoute />}>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
+      {/* public routes */}
+      <Route element={<PublicRoute />}>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
+      {/* protected routes */}
+      <Route element={<PersistLogin />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>

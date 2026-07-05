@@ -16,8 +16,7 @@ function PersistLogin() {
       try {
         await refreshToken();
       } catch (error) {
-        // This is expected locally when refresh cookie is not sent
-        // from localhost -> deployed backend, so keep it silent.
+        // If refresh fails, ProtectedRoute will handle redirect logic.
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -27,9 +26,10 @@ function PersistLogin() {
 
     if (accessToken) {
       setIsLoading(false);
-    } else {
-      verifyRefreshToken();
+      return;
     }
+
+    verifyRefreshToken();
 
     return () => {
       isMounted = false;
@@ -38,8 +38,8 @@ function PersistLogin() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--color-background)] px-6">
-        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-5 text-sm text-[var(--color-text-secondary)] shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="flex min-h-screen items-center justify-center bg-(--color-background) px-6">
+        <div className="rounded-3xl border border-(--color-border) bg-(--color-surface) px-6 py-5 text-sm text-(--color-text-secondary) shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
           Restoring your session...
         </div>
       </div>
