@@ -20,6 +20,10 @@ const notesSchema = new mongoose.Schema({
     timestamps:true,
 });
 
+notesSchema.index({user:1,createdAt: -1});
+notesSchema.index({user:1,updatedAt: -1});
+notesSchema.index({user:1,title: 1});
+
 const note = mongoose.model('note',notesSchema);
 
 module.exports = note;
